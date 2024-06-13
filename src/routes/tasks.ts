@@ -22,7 +22,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
-		const tasks = await Task.find();
+		const tasks = await Task.find(req.query);
 		res.json(tasks);
 	} catch (error) {
 		console.error(error);
@@ -38,13 +38,13 @@ router.get("/:id", async (req: Request, res: Response) => {
 			return res.status(404).send();
 		}
 
-		/* const task = await Task.findById(req.params.id)
-			.populate("assigned_user"); */
+		const task = await Task.findById(req.params.id)
+			.populate("assigned_user");
 
-		const task = await Task.findById(req.params.id).populate({
+		/* const task = await Task.findById(req.params.id).populate({
 			path: "assigned_user",
 			select: "username bio",
-		});
+		}); */
 
 		if (!task) {
 			res.status(404).send("Task not found");

@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
-import User from "../models/user";
+import { isValidObjectId } from "mongoose";
+import Issue from "../models/issue";
 import { connectDB } from "../utils/db";
 
 const router = Router();
@@ -8,10 +9,10 @@ router.post("/", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 
-		const newUser = new User(req.body);
-		await newUser.save();
+		const newIssue = new Issue(req.body);
+		await newIssue.save();
 
-		return res.status(201).json(newUser);
+		res.status(201).json(newIssue);
 	} catch (error) {
 		console.error(error);
 		return res.status(500).send("Internal Server Error");
@@ -21,8 +22,8 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
-		const users = await User.find(req.query);
-		return res.json(users);
+		const issues = await Issue.find(req.query);
+		res.json(issues);
 	} catch (error) {
 		console.error(error);
 		return res.status(500).send("Internal Server Error");
@@ -33,12 +34,16 @@ router.get("/:id", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 
-		const user = await User.findById(req.params.id);
+		if (!isValidObjectId(req.params.id)) {
+			return res.status(404).send();
+		}
 
-		if (!user) {
-			res.status(404).send("User not found");
+		const issue = await Issue.findById(req.params.id);
+
+		if (!issue) {
+			res.status(404).send("Issue not found");
 		} else {
-			return res.json(user);
+			res.json(issue);
 		}
 	} catch (error) {
 		console.error(error);
@@ -50,13 +55,16 @@ router.put("/:id", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 
-		const user = await User.findById(req.params.id);
+		if (!isValidObjectId(req.params.id)) {
+			return res.status(404).send();
+		}
 
-		if (!user) {
-			res.status(404).send("User not found");
+		const issue = await Issue.findByIdAndUpdate(req.params.id, req.body);
+
+		if (!issue) {
+			return res.status(404).send("Issue not found");
 		} else {
-			await user.updateOne(req.body);
-			return res.json(user);
+			return res.json(issue);
 		}
 	} catch (error) {
 		console.error(error);
@@ -68,18 +76,17 @@ router.patch("/:id", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 
-		const user = await User.findById(req.params.id);
+		if (!isValidObjectId(req.params.id)) {
+			return res.status(404).send();
+		}
 
-		if (!user) {
-			res.status(404).send("User not found");
+		const issue = await Issue.findById(req.params.id);
+
+		if (!issue) {
+			res.status(404).send("Issue not found");
 		} else {
-			user.username = req.body.name ?? user.username;
-			user.email = req.body.email ?? user.email;
-			user.age = req.body.age ?? user.age;
-			user.bio = req.body.bio ?? user.bio;
-
-			await user.save();
-			return res.json(user);
+			await issue.updateOne(req.body);
+			res.json(issue);
 		}
 	} catch (error) {
 		console.error(error);
@@ -91,13 +98,17 @@ router.delete("/:id", async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 
-		const user = await User.findById(req.params.id);
+		if (!isValidObjectId(req.params.id)) {
+			return res.status(404).send();
+		}
 
-		if (!user) {
-			res.status(404).send("User not found");
+		const issue = await Issue.findById(req.params.id);
+
+		if (!issue) {
+			res.status(404).send("Issue not found");
 		} else {
-			await user.deleteOne();
-			return res.status(204).send();
+			await issue.deleteOne();
+			res.status(204).send();
 		}
 	} catch (error) {
 		console.error(error);
